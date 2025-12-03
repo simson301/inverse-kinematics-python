@@ -45,9 +45,23 @@ class Segment:
 
 
 class Arm:
-    def __init__(self, segments):
+    def __init__(self, segments=[]):
         self.segments = segments
     
+    def addSegment(self, length):
+        if len(self.segments) > 0:
+            base = self.segments[-1].tip
+            tip = Point3(base.x, base.y+length, base.z)
+            self.segments.append(Segment(base, tip))
+        else:
+            base = Point3(0,0,0)
+            tip = Point3(base.x, base.y+length, base.z)
+            self.segments.append(Segment(base, tip))
+
+    def addSegments(self, segment_lengths):
+        for segment_length in segment_lengths:
+            self.addSegment(segment_length)
+
     def wiggle(self, p, n):
         first_base = self.segments[0].base
         current_point = p
@@ -139,6 +153,26 @@ class Arm:
         plt.tight_layout()
         plt.show()
 
+    def log(self):
+        angles = self.calculate_servo_angles()
+
+        print("============= SEGMENTS ============= ")
+        
+        for i in range(len(self.segments)):
+            seg = self.segments[i]
+
+            print(f"""SEGMENT {i+1}:
+                  
+Base X: {seg.base.x}, Y: {seg.base.y}, 
+Tip X: {seg.tip.x}, Y: {seg.tip.y}, 
+fixed Length: {seg.length}, 
+current Length: {Point3.distance(seg.base, seg.tip)},
+Rotation: {angles[i]}
+""")
+        print(f"\nRotation Z: {Arm.map_value(arm.segments[0].angle()[1], -90, 90, 0, 180)}")
+
+        
+
 
 
 class Point3: # A bit unnecessary Point class (could just use Vector3)
@@ -176,7 +210,7 @@ class Vector3:
     def to_point(self, p):
         return Point3(self.x+p.x, self.y+p.y, self.z+p.z)
     
-
+"""
 arm = Arm([
     Segment(Point3(0, 0, 0), Point3(0, 2, 0)), 
     Segment(Point3(0, 2, 0), Point3(0, 4, 0)), 
@@ -184,19 +218,13 @@ arm = Arm([
     Segment(Point3(0, 6, 0), Point3(0, 8, 0)), 
     Segment(Point3(0, 8, 0), Point3(0, 10, 0))
     ])
+"""
 
-arm.wiggle(Point3(0, 0, 0), 10)
+arm = Arm()
 
-
-for seg in arm.segments:
-    print(f"Base X: {seg.base.x}, Y: {seg.base.y}, Tip X: {seg.tip.x}, Y: {seg.tip.y}")
-
-print(f"Rotation Z: {Arm.map_value(arm.segments[0].angle()[1], -90, 90, 0, 180)}")
-
-for angle in arm.calculate_servo_angles():
-    print(f"Rotation: {angle}")
-
-
+arm.addSegments([2,2,2,2,2])
+arm.wiggle(Point3(5, 7, 0), 10)
+arm.log()
 arm.plot_xy_xz()
 
 
